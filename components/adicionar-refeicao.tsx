@@ -4,26 +4,19 @@
 import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { salvarRefeicao } from '@/lib/storage'
-import { format } from 'date-fns'
 
 type Alimento = {
-  nome: string
+  alimento: string
   quantidade: string
 }
 
 export function AdicionarRefeicao() {
-  // Estado para controlar se o modal está aberto
   const [aberto, setAberto] = useState(false)
-  
-  // Estado do formulário
   const [nome, setNome] = useState('')
   const [alimentos, setAlimentos] = useState<Alimento[]>([])
-  
-  // Estado para adicionar alimento
   const [alimentoNome, setAlimentoNome] = useState('')
   const [alimentoQtd, setAlimentoQtd] = useState('')
   
-  // Adiciona um alimento à lista
   function adicionarAlimento() {
     if (!alimentoNome.trim() || !alimentoQtd.trim()) {
       alert('Preencha o nome e a quantidade do alimento')
@@ -31,22 +24,19 @@ export function AdicionarRefeicao() {
     }
     
     setAlimentos([...alimentos, {
-      nome: alimentoNome.trim(),
+      alimento: alimentoNome.trim(),
       quantidade: alimentoQtd.trim()
     }])
     
-    // Limpa os campos
     setAlimentoNome('')
     setAlimentoQtd('')
   }
   
-  // Remove um alimento da lista
   function removerAlimento(index: number) {
     setAlimentos(alimentos.filter((_, i) => i !== index))
   }
   
-  // Salva a refeição
-  function salvar() {
+  async function salvar() {
     if (!nome.trim()) {
       alert('Preencha o nome da refeição')
       return
@@ -57,25 +47,23 @@ export function AdicionarRefeicao() {
       return
     }
     
-    const agora = new Date()
-    
-    salvarRefeicao({
-      nome: nome.trim(),
-      data: format(agora, 'dd/MM/yyyy'),
-      hora: format(agora, 'HH:mm'),
-      alimentos
-    })
-    
-    // Limpa o formulário
-    setNome('')
-    setAlimentos([])
-    setAberto(false)
-    
-    // Recarrega a página para atualizar a lista
-    window.location.reload()
+    try {
+      await salvarRefeicao({
+        nome: nome.trim(),
+        alimentos
+      })
+      
+      setNome('')
+      setAlimentos([])  // ✅ CORRIGIDO: array vazio, não string
+      setAberto(false)
+      
+      window.location.reload()
+    } catch (error) {
+      console.error('Erro ao salvar refeição:', error)
+      alert('Erro ao salvar refeição. Tente novamente.')
+    }
   }
   
-  // Se não está aberto, mostra apenas o botão flutuante
   if (!aberto) {
     return (
       <button
@@ -88,19 +76,15 @@ export function AdicionarRefeicao() {
     )
   }
   
-  // Modal aberto
   return (
     <>
-      {/* Fundo escuro */}
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 z-40"
         onClick={() => setAberto(false)}
       />
       
-      {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-          {/* Cabeçalho */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">
               Nova Refeição
@@ -113,7 +97,6 @@ export function AdicionarRefeicao() {
             </button>
           </div>
           
-          {/* Nome da refeição */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Nome da Refeição *
@@ -127,7 +110,6 @@ export function AdicionarRefeicao() {
             />
           </div>
           
-          {/* Seção de adicionar alimento */}
           <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <h3 className="font-medium text-gray-700 mb-3">
               Adicionar Alimento
@@ -160,21 +142,20 @@ export function AdicionarRefeicao() {
             </button>
           </div>
           
-          {/* Lista de alimentos adicionados */}
           {alimentos.length > 0 && (
             <div className="mb-6">
               <h3 className="font-medium text-gray-700 mb-3">
                 Alimentos ({alimentos.length}):
               </h3>
               <div className="space-y-2">
-                {alimentos.map((alimento, idx) => (
+                {alimentos.map((item, idx) => (
                   <div 
                     key={idx} 
                     className="flex justify-between items-center bg-purple-50 p-3 rounded-lg border border-purple-100"
                   >
                     <span className="text-sm text-gray-700">
-                      <strong>{alimento.nome}</strong>
-                      <span className="text-gray-500"> — {alimento.quantidade}</span>
+                      <strong>{item.alimento}</strong>
+                      <span className="text-gray-500"> — {item.quantidade}</span>
                     </span>
                     <button
                       onClick={() => removerAlimento(idx)}
@@ -189,7 +170,6 @@ export function AdicionarRefeicao() {
             </div>
           )}
           
-          {/* Botão de salvar */}
           <button
             onClick={salvar}
             className="w-full bg-purple-600 text-white rounded-lg py-3 font-semibold text-lg hover:bg-purple-700 transition-colors shadow-md hover:shadow-lg"

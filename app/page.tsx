@@ -1,27 +1,27 @@
 // app/page.tsx
-import { ListaRefeicoes } from '@/components/lista-refeicoes'
-import { AdicionarRefeicao } from '@/components/adicionar-refeicao'
+'use client'
 
-export default function Home() {
+import { useAuth } from '@/contexts/auth-context'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
+export default function RootPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        router.push('/dashboard')
+      } else {
+        router.push('/login')
+      }
+    }
+  }, [user, loading, router])
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* Cabeçalho */}
-        <div className="mb-10 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-orange-500 mb-3">
-            Diário Alimentar
-          </h1>
-          <p className="text-gray-600 text-lg">
-            REGISTRE SUAS REFEIÇÕES 🍽️
-          </p>
-        </div>
-        
-        {/* Lista de refeições */}
-        <ListaRefeicoes />
-        
-        {/* Botão flutuante de adicionar */}
-        <AdicionarRefeicao />
-      </div>
-    </main>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+    </div>
   )
 }

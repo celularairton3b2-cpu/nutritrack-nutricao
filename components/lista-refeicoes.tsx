@@ -4,33 +4,47 @@
 import { useEffect, useState } from 'react'
 import { obterRefeicoes, deletarRefeicao, type Refeicao } from '@/lib/storage'
 import { CardRefeicao } from './card-refeicao'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 export function ListaRefeicoes() {
   const [refeicoes, setRefeicoes] = useState<Refeicao[]>([])
   
-  // Carrega refeições quando o componente monta
   useEffect(() => {
-    setRefeicoes(obterRefeicoes())
+    carregarRefeicoes()
   }, [])
-  
-  // Função para deletar e atualizar lista
-  function handleDeletar(id: string) {
-    if (confirm('Tem certeza que deseja deletar esta refeição?')) {
-      deletarRefeicao(id)
-      setRefeicoes(obterRefeicoes())
+
+  async function carregarRefeicoes() {
+    try {
+      const dados = await obterRefeicoes()
+      setRefeicoes(dados)
+    } catch (error) {
+      console.error('Erro ao carregar refeições:', error)
     }
   }
   
-  // Agrupa refeições por data
-  const refeicoesAgrupadas = refeicoes.reduce((acc, refeicao) => {
-    if (!acc[refeicao.data]) {
-      acc[refeicao.data] = []
+  async function handleDeletar(id: string) {
+    if (confirm('Tem certeza que deseja deletar esta refeição?')) {
+      try {
+        await deletarRefeicao(id)
+        await carregarRefeicoes()
+      } catch (error) {
+        console.error('Erro ao deletar refeição:', error)
+        alert('Erro ao deletar refeição. Tente novamente.')
+      }
     }
-    acc[refeicao.data].push(refeicao)
+  }
+  
+  // Agrupa refeições por data (formato dd/MM/yyyy)
+  const refeicoesAgrupadas = refeicoes.reduce((acc, refeicao) => {
+    const dataFormatada = format(new Date(refeicao.data), 'dd/MM/yyyy', { locale: ptBR })
+    if (!acc[dataFormatada]) {
+      acc[dataFormatada] = []
+    }
+    acc[dataFormatada].push(refeicao)
     return acc
   }, {} as Record<string, Refeicao[]>)
   
-  // Se não tem refeições, mostra mensagem
   if (refeicoes.length === 0) {
     return (
       <div className="text-center py-16 text-gray-500">
@@ -45,12 +59,11 @@ export function ListaRefeicoes() {
     )
   }
   
-  // Mostra refeições agrupadas por data
   return (
     <div className="space-y-6">
       {Object.entries(refeicoesAgrupadas)
         .sort(([dataA], [dataB]) => {
-          // Ordena do mais recente para o mais antigo
+          // Converter para timestamp e ordenar do mais recente pro mais antigo
           const [diaA, mesA, anoA] = dataA.split('/').map(Number)
           const [diaB, mesB, anoB] = dataB.split('/').map(Number)
           const timestampA = new Date(anoA, mesA - 1, diaA).getTime()
@@ -64,7 +77,7 @@ export function ListaRefeicoes() {
             </h2>
             <div className="space-y-3">
               {refeicoesData
-                .sort((a, b) => a.hora.localeCompare(b.hora))
+                .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
                 .map(refeicao => (
                   <CardRefeicao
                     key={refeicao.id}

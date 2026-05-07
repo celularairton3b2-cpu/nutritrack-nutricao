@@ -1,6 +1,6 @@
-// app/layout.tsx
 import type { Metadata } from "next"
 import "./globals.css"
+import { AuthProvider } from "@/contexts/auth-context"
 
 export const metadata: Metadata = {
   title: "Diário Alimentar - Jejum Intermitente",
@@ -15,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="antialiased">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   )
